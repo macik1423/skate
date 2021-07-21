@@ -8,50 +8,34 @@ class PointsFirebaseRepository implements PointsRepository {
 
   @override
   Future<void> addNewPoints(Set<SkatePoint> skatePoints) async {
-    // return skatePoints.forEach((element) {
-    //   pointsCollection.doc(element.id).set(element.toEntity().toDocument());
-    // });
-
-    return skatePoints.forEach((element) {
+    return skatePoints.forEach((skatePoint) {
       pointsCollection
-          .doc(element.id)
+          .doc(skatePoint.id)
           .get()
           .then((DocumentSnapshot documentSnapshot) {
         if (documentSnapshot.exists) {
-          print("ISTNIEJE JUZ!!!!!!!!!!!!!!");
+          var skatePointEntity =
+              SkatePointEntity.fromSnapshot(documentSnapshot);
+          int newNumberOfRatings = skatePointEntity.numberOfRatings + 1;
+          int newSkatePointLevel = (skatePointEntity.level +
+                  (skatePoint.level - skatePointEntity.level) /
+                      newNumberOfRatings)
+              .toInt();
+
+          String id = skatePointEntity.id;
+          pointsCollection.doc(id).update(
+            {
+              "numberOfRatings": newNumberOfRatings,
+              "level": newSkatePointLevel
+            },
+          );
         } else {
-          pointsCollection.doc(element.id).set(element.toEntity().toDocument());
+          pointsCollection
+              .doc(skatePoint.id)
+              .set(skatePoint.toEntity().toDocument());
         }
       });
     });
-
-    // return pointsCollection
-    //     .where("coordinates", isEqualTo: skatePoint.coordinates)
-    //     .limit(1)
-    //     .get()
-    //     .then(
-    //   (snap) {
-    //     if (snap.size == 1) {
-    //       var skatePointEntity = SkatePointEntity.fromSnapshot(snap.docs.first);
-    //       int newSkatePointLevel = (skatePointEntity.level +
-    //               (skatePoint.level - skatePointEntity.level) /
-    //                   (skatePointEntity.numberOfRatings + 1))
-    //           .toInt();
-    //       int newNumberOfRatings =
-    //           SkatePointEntity.fromSnapshot(snap.docs.first).numberOfRatings +
-    //               1;
-    //       String id = skatePointEntity.id;
-    //       pointsCollection.doc(id).update(
-    //         {
-    //           "numberOfRatings": newNumberOfRatings,
-    //           "level": newSkatePointLevel
-    //         },
-    //       );
-    //     } else {
-    //       pointsCollection.add(skatePoint.toEntity().toDocument());
-    //     }
-    //   },
-    // );
   }
 
   @override

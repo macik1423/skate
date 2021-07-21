@@ -17,7 +17,6 @@ import 'package:flutter_map_tappable_polyline/flutter_map_tappable_polyline.dart
 import 'package:skate/bloc/lines_state.dart';
 import 'package:skate/bloc/points_state.dart';
 import 'package:skate/model/level.dart' as ModelLevel;
-import 'package:skate/bloc/points_event.dart';
 
 class MapSkate extends StatefulWidget {
   const MapSkate({Key? key}) : super(key: key);
@@ -64,13 +63,6 @@ class _MapSkateState extends State<MapSkate> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(Util.ADDED_POINTS_SUCCESS),
-              ),
-            );
-          }
-          if (pointsState is PointsLoadSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("sukces kurwa zaladowania"),
               ),
             );
           }
