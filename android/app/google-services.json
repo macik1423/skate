@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "94969365878",
+    "project_id": "skate-12c1d",
+    "storage_bucket": "skate-12c1d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:94969365878:android:6ba5e8bf850ed7e9386657",
+        "android_client_info": {
+          "package_name": "com.example.skate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "94969365878-ole35dedqcbj6iej4vdt06dehipigf48.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmMbjOU3e799cGp-Epg1b_LMQeCqPM5V4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "94969365878-ole35dedqcbj6iej4vdt06dehipigf48.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
