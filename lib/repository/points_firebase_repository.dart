@@ -17,16 +17,17 @@ class PointsFirebaseRepository implements PointsRepository {
           var skatePointEntity =
               SkatePointEntity.fromSnapshot(documentSnapshot);
           int newNumberOfRatings = skatePointEntity.numberOfRatings + 1;
-          int newSkatePointLevel = (skatePointEntity.level +
-                  (skatePoint.level - skatePointEntity.level) /
-                      newNumberOfRatings)
-              .toInt();
+          double avg = (skatePointEntity.avg +
+              (skatePoint.avg - skatePointEntity.avg) / newNumberOfRatings);
+
+          int newSkatePointLevel = avg.round();
 
           String id = skatePointEntity.id;
           pointsCollection.doc(id).update(
             {
               "numberOfRatings": newNumberOfRatings,
-              "level": newSkatePointLevel
+              "level": newSkatePointLevel,
+              "avg": avg,
             },
           );
         } else {

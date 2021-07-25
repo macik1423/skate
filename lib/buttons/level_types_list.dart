@@ -64,11 +64,14 @@ class LevelTypesList extends StatelessWidget {
     var state = context.read<RecordCubit>().state;
     if (state is RecordStop) {
       var coordinates = state.coordinates.toSet();
-      Set<SkatePoint> skatePoints = coordinates
-          .map((point) => SkatePoint(
-              level: LevelType.values.elementAt(index).level.value,
-              coordinates: GeoPoint(point.latitude, point.longitude)))
-          .toSet();
+      Set<SkatePoint> skatePoints = coordinates.map((point) {
+        var pointLevel = LevelType.values.elementAt(index).level.value;
+        return SkatePoint(
+          level: pointLevel,
+          coordinates: GeoPoint(point.latitude, point.longitude),
+          avg: pointLevel.toDouble(),
+        );
+      }).toSet();
       context.read<PointsBloc>().add(AddPoints(skatePoints: skatePoints));
     }
   }

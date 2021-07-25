@@ -149,8 +149,8 @@ class _MapSkateState extends State<MapSkate> {
           return Marker(
             point:
                 LatLng(point.coordinates.latitude, point.coordinates.longitude),
-            width: diameter + 50,
-            height: diameter + 50,
+            width: diameter,
+            height: diameter,
             builder: (ctx) => Container(
               decoration: BoxDecoration(
                 color: ModelLevel.Level.ofValue(point.level).color,
@@ -160,8 +160,6 @@ class _MapSkateState extends State<MapSkate> {
           );
         },
       ).toList();
-    } else {
-      print("dupa");
     }
     return [];
   }
