@@ -38,6 +38,8 @@ class Level {
 
   factory Level.ofValue(int value) {
     switch (value) {
+      case 0:
+        return Level(value: value, color: Colors.black);
       case 1:
         return Level(
             value: value, color: Colors.red.shade900); //wybierane przez usera

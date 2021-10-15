@@ -2,11 +2,17 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:location/location.dart';
 import 'package:meta/meta.dart';
-
+import 'package:skate/bloc/points_bloc.dart';
+import 'package:skate/bloc/points_event.dart';
+import 'package:skate/buttons/level_types_list.dart';
+import 'package:skate/model/level.dart';
+import 'package:skate/model/skate_point.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 part 'record_state.dart';
 
 class RecordCubit extends Cubit<RecordState> {
@@ -20,33 +26,30 @@ class RecordCubit extends Cubit<RecordState> {
 
   RecordCubit()
       : super(
-          RecordStop(
+          RecordInitial(
             icon: Container(
               width: 18.0,
               height: 18.0,
               decoration:
                   BoxDecoration(color: Colors.red, shape: BoxShape.circle),
             ),
-            coordinates: Set(),
           ),
         );
 
   Future<void> toggleRecordButton() async {
+    _location.enableBackgroundMode(enable: true);
     _streamSubLocation?.cancel();
-    if (state is RecordStop) {
+    if (state is RecordInitial) {
+      _coordinates = Set();
       _streamSubLocation =
           _location.onLocationChanged.listen((LocationData currentLocation) {
-        // var stream = generateMockLocation();
-        // _simulateLocation(stream);
-        // _streamSubLocation =
-        //     onLocationChanged.listen((LocationData currentLocation) {
         print(
             "LISTEN COORDINATES ${currentLocation.latitude!} ${currentLocation.longitude!}");
-
         _coordinates.add(
           GeoPoint(currentLocation.latitude!, currentLocation.longitude!),
         );
       });
+      final LocationData currentLocation = await _location.getLocation();
       emit(
         RecordStart(
           icon: Container(
@@ -54,6 +57,10 @@ class RecordCubit extends Cubit<RecordState> {
             height: 18.0,
             decoration:
                 BoxDecoration(color: Colors.red, shape: BoxShape.rectangle),
+          ),
+          start: GeoPoint(
+            currentLocation.latitude!,
+            currentLocation.longitude!,
           ),
         ),
       );
@@ -76,21 +83,44 @@ class RecordCubit extends Cubit<RecordState> {
     }
   }
 
-  Future<void> _simulateLocation(Stream<LocationData> stream) async {
-    await for (var locationData in stream) {
-      print("SIMULATED LOCATION DATA: $locationData");
-      _streamController.sink.add(locationData);
-    }
+  void showPossibleVotes(BuildContext context) {
+    Scaffold.of(context).showBottomSheet(
+      (context) => Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20.0),
+            topRight: const Radius.circular(20.0),
+          ),
+        ),
+        child: LevelTypesList(),
+      ),
+    );
   }
 
-  Stream<LocationData> generateMockLocation() async* {
-    for (double i = 0; i < 0.001; i += 0.0003) {
-      yield LocationData.fromMap({
-        "latitude": 37.421998,
-        "longitude": double.parse((-122.086 + i).toStringAsFixed(5)),
-        "speed": 0.1
-      });
+  void putCoordinatesToDb(BuildContext context, int index) {
+    if (state is RecordStop) {
+      final coordinates = _coordinates.toSet();
+      final Set<SkatePoint> skatePoints = coordinates.map((point) {
+        final pointLevel = LevelType.values.elementAt(index).level.value;
+        return SkatePoint(
+          level: pointLevel,
+          coordinates: GeoPoint(point.latitude, point.longitude),
+          avg: pointLevel.toDouble(),
+        );
+      }).toSet();
+      context.read<PointsBloc>().add(AddPoints(skatePoints: skatePoints));
     }
+    emit(
+      RecordInitial(
+        icon: Container(
+          width: 18.0,
+          height: 18.0,
+          decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+        ),
+      ),
+    );
   }
 
   @override

@@ -23,4 +23,4 @@ class PointsLoadFailure extends PointsState {}
 
 class PointsAddedSuccess extends PointsState {}
 
-class PointsAddedFailure extends PointsState {}
+class PointsAddedConnectionFailure extends PointsState {}

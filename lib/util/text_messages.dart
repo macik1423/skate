@@ -9,4 +9,5 @@ class Util {
     "Dziurawy asfalt/ścieżka rowerowa, kostka, chodnik",
     "Brak drogi"
   ];
+  static const String RECORD_BUTTON_DISABLED = "Brak połączenia z internetem";
 }

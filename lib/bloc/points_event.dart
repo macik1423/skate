@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:skate/model/skate_point.dart';
 
@@ -15,6 +16,9 @@ class AddPoints extends PointsEvent {
   final Set<SkatePoint> skatePoints;
 
   AddPoints({required this.skatePoints});
+
+  @override
+  String toString() => 'AddPoints(skatePoints: $skatePoints)';
 }
 
 class PointsUpdated extends PointsEvent {
@@ -35,3 +39,5 @@ class PointsUpdatedFailure extends PointsEvent {
     required this.details,
   });
 }
+
+class AddPointConnectionFailure extends PointsEvent {}

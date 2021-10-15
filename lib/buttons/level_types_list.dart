@@ -1,12 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:skate/bloc/points_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skate/cubit/record_cubit.dart';
 import 'package:skate/model/level.dart';
-import 'package:skate/model/skate_point.dart';
 import 'package:skate/util/text_messages.dart';
-import 'package:skate/bloc/points_event.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LevelTypesList extends StatelessWidget {
   const LevelTypesList({
@@ -48,7 +44,9 @@ class LevelTypesList extends StatelessWidget {
                     ),
                   ),
                   onTap: () {
-                    putCoordinatesToDb(context, index);
+                    context
+                        .read<RecordCubit>()
+                        .putCoordinatesToDb(context, index);
                     Navigator.of(context).pop();
                   },
                 ),
@@ -58,21 +56,5 @@ class LevelTypesList extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  void putCoordinatesToDb(BuildContext context, int index) {
-    var state = context.read<RecordCubit>().state;
-    if (state is RecordStop) {
-      var coordinates = state.coordinates.toSet();
-      Set<SkatePoint> skatePoints = coordinates.map((point) {
-        var pointLevel = LevelType.values.elementAt(index).level.value;
-        return SkatePoint(
-          level: pointLevel,
-          coordinates: GeoPoint(point.latitude, point.longitude),
-          avg: pointLevel.toDouble(),
-        );
-      }).toSet();
-      context.read<PointsBloc>().add(AddPoints(skatePoints: skatePoints));
-    }
   }
 }

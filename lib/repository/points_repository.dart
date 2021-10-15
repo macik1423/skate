@@ -1,3 +1,4 @@
+import 'package:latlong2/latlong.dart';
 import 'package:skate/model/skate_point.dart';
 
 abstract class PointsRepository {

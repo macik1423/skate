@@ -24,6 +24,8 @@ class PointsBloc extends Bloc<PointsEvent, PointsState> {
       yield* _mapPointsUpdateToStateFailure();
     } else if (event is AddPoints) {
       yield* _mapAddPointsToState(event);
+    } else if (event is AddPointConnectionFailure) {
+      yield* _mapAddPointConnectionFailureToState(event);
     }
   }
 
@@ -51,9 +53,14 @@ class PointsBloc extends Bloc<PointsEvent, PointsState> {
     yield PointsLoadFailure();
   }
 
-  //trzeba rzucic wyjatkeim w addNewPoint jesli punlty juz istnieja wtedy nie przejdzie pointspdated to jest na bank zle
   Stream<PointsState> _mapAddPointsToState(AddPoints event) async* {
-    _pointsRepository.addNewPoints(event.skatePoints);
+    await _pointsRepository.addNewPoints(event.skatePoints);
+    yield PointsAddedSuccess();
+  }
+
+  Stream<PointsState> _mapAddPointConnectionFailureToState(
+      AddPointConnectionFailure event) async* {
+    yield PointsAddedConnectionFailure();
   }
 
   @override

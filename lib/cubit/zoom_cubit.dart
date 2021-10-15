@@ -16,11 +16,11 @@ class ZoomCubit extends Cubit<double> {
   //   }
   // }
 
-  changeStokeWidth(zoom) {
+  changeStrokeWidth(zoom) {
     if (zoom <= 17 && zoom >= 16) {
-      emit(10.0);
-    } else if (zoom < 16 && zoom >= 15) {
       emit(8.0);
+    } else if (zoom < 16 && zoom >= 15) {
+      emit(7.0);
     } else if (zoom < 15 && zoom >= 13) {
       emit(5.0);
     } else {

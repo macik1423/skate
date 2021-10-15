@@ -6,12 +6,16 @@ import 'package:flutter_map_location/flutter_map_location.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:skate/bloc/points_bloc.dart';
 import 'package:skate/buttons/location_button.dart';
-import 'package:skate/buttons/open_street_map_license.dart';
 import 'package:skate/buttons/record_button.dart';
+import 'package:skate/cubit/internet_cubit.dart';
+import 'package:skate/cubit/internet_state.dart';
+import 'package:skate/cubit/record_cubit.dart';
 import 'package:skate/cubit/zoom_cubit.dart';
+import 'package:skate/markers/triangle.dart';
 import 'package:skate/model/line.dart';
 import 'package:skate/model/skate_point.dart';
 import 'package:skate/util/text_messages.dart';
+import 'license/open_street_map_license.dart';
 import 'widgets/drawer.dart';
 import 'package:flutter_map_tappable_polyline/flutter_map_tappable_polyline.dart';
 import 'package:skate/bloc/lines_state.dart';
@@ -40,98 +44,27 @@ class _MapSkateState extends State<MapSkate> {
       ),
       extendBodyBehindAppBar: true,
       drawer: buildDrawer(context, MapSkate.route),
-      // body: BlocConsumer<LinesBloc, LinesState>(
-      //   listener: (linesContext, linesState) {
-      //     if (linesState is LinesLoadFailure) {
-      //       ScaffoldMessenger.of(context).showSnackBar(
-      //         SnackBar(
-      //           content: Text("failure"),
-      //         ),
-      //       );
-      //     }
-      //   },
-      body: BlocConsumer<PointsBloc, PointsState>(
-        listener: (pointsContext, pointsState) {
-          if (pointsState is PointsLoadFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(Util.LOAD_POINTS_FAILURE),
-              ),
-            );
-          }
-          if (pointsState is PointsAddedSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(Util.ADDED_POINTS_SUCCESS),
-              ),
-            );
-          }
+      body: BlocConsumer<InternetCubit, InternetState>(
+        listener: (context, internetState) {
+          showInternetSnackBar(internetState, context);
         },
-        builder: (pointsContext, pointsState) {
-          return BlocBuilder<ZoomCubit, double>(
-            builder: (zoomContext, zoomState) {
-              return Center(
-                child: FlutterMap(
-                  nonRotatedChildren: [
-                    RecordButton(),
-                    OSMLicense(),
-                  ],
-                  mapController: mapController,
-                  options: MapOptions(
-                    minZoom: MIN_ZOOM,
-                    maxZoom: MAX_ZOOM,
-                    interactiveFlags:
-                        InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-                    plugins: <MapPlugin>[
-                      LocationPlugin(),
-                      TappablePolylineMapPlugin()
-                    ],
-                    onPositionChanged: (position, hasGesture) {
-                      final zoom = position.zoom;
-                      if (zoom != null) {
-                        print("zoom $zoom");
-
-                        zoomContext.read<ZoomCubit>().changeStokeWidth(zoom);
-                        print("state ${zoomContext.read<ZoomCubit>().state}");
-                      }
+        builder: (context, internetState) {
+          return BlocConsumer<PointsBloc, PointsState>(
+            listener: (pointsContext, pointsState) {
+              showPointsSnackBar(pointsState, context);
+            },
+            builder: (pointsContext, pointsState) {
+              return BlocBuilder<ZoomCubit, double>(
+                builder: (zoomContext, zoomState) {
+                  return BlocBuilder<RecordCubit, RecordState>(
+                    builder: (recordContext, recordState) {
+                      return Center(
+                        child: mainMap(internetState, zoomContext, pointsState,
+                            recordState),
+                      );
                     },
-                  ),
-                  layers: <LayerOptions>[
-                    TileLayerOptions(
-                      urlTemplate:
-                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: <String>['a', 'b', 'c'],
-                    ),
-                    TappablePolylineLayerOptions(
-                      // Will only render visible polylines, increasing performance
-                      polylineCulling: true,
-                      pointerDistanceTolerance: 20,
-                      // polylines: getTaggedPolylines(linesState, zoomState),
-                      onTap: (TaggedPolyline polyline) =>
-                          print("---------${polyline.tag} -----"),
-                      onMiss: () =>
-                          print("-----No polyline tapped zoom:---------"),
-                    ),
-                    MarkerLayerOptions(
-                      markers: markers(pointsState, zoomContext),
-                    )
-                  ],
-                  nonRotatedLayers: <LayerOptions>[
-                    LocationOptions(
-                      locationButton(),
-                      onLocationUpdate: (LatLngData? ld) {
-                        print(
-                            'Location updated: ${ld?.location} (accuracy: ${ld?.accuracy})');
-                      },
-                      onLocationRequested: (LatLngData? ld) {
-                        if (ld == null) {
-                          return;
-                        }
-                        mapController.move(ld.location, 16.0);
-                      },
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           );
@@ -140,12 +73,126 @@ class _MapSkateState extends State<MapSkate> {
     );
   }
 
-  List<Marker> markers(PointsState pointsState, BuildContext zoomContext) {
-    if (pointsState is PointsLoadSuccess) {
+  FlutterMap mainMap(InternetState internetState, BuildContext zoomContext,
+      PointsState pointsState, RecordState recordState) {
+    return FlutterMap(
+      nonRotatedChildren: [
+        internetState is InternetConnected
+            ? EnabledRecordButton()
+            : DisabledRecordButton(),
+        OSMLicense(),
+      ],
+      mapController: mapController,
+      options: MapOptions(
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
+        interactiveFlags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+        plugins: <MapPlugin>[LocationPlugin(), TappablePolylineMapPlugin()],
+        onPositionChanged: (position, hasGesture) {
+          final zoom = position.zoom;
+          if (zoom != null) {
+            print("zoom ");
+
+            zoomContext.read<ZoomCubit>().changeStrokeWidth(zoom);
+            print(
+                "state ${zoomContext.read<ZoomCubit>().state}, position ${position.center}");
+          }
+        },
+      ),
+      layers: <LayerOptions>[
+        TileLayerOptions(
+          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: <String>['a', 'b', 'c'],
+        ),
+        MarkerLayerOptions(
+          markers: markers(pointsState, zoomContext, recordState),
+        ),
+      ],
+      nonRotatedLayers: <LayerOptions>[
+        LocationOptions(
+          locationButton(),
+          onLocationUpdate: (LatLngData? ld) {
+            print(
+                'Location updated: ${ld?.location} (accuracy: ${ld?.accuracy})');
+          },
+          onLocationRequested: (LatLngData? ld) {
+            if (ld == null) {
+              return;
+            }
+            mapController.move(ld.location, 16.0);
+          },
+        ),
+      ],
+    );
+  }
+
+  void showPointsSnackBar(PointsState pointsState, BuildContext context) {
+    if (pointsState is PointsLoadFailure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(Util.LOAD_POINTS_FAILURE),
+        ),
+      );
+    }
+    if (pointsState is PointsAddedSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(Util.ADDED_POINTS_SUCCESS),
+        ),
+      );
+    }
+    if (pointsState is PointsAddedConnectionFailure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text("nie udało sie dodać danych, brak dostepu do internetu"),
+        ),
+      );
+    }
+  }
+
+  void showInternetSnackBar(InternetState internetState, BuildContext context) {
+    if (internetState is InternetDisconnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("OFFLINE"),
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
+    } else if (internetState is InternetConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Jesteś ONLINE"),
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+  }
+
+  List<Marker> markers(PointsState pointsState, BuildContext zoomContext,
+      RecordState recordState) {
+    if (recordState is RecordStart) {
+      print("record start -----> ${recordState.start.latitude}");
+      final point = recordState.start;
+      return [
+        Marker(
+          point: LatLng(point.latitude, point.longitude),
+          width: 32,
+          height: 32,
+          builder: (ctx) => CustomPaint(
+            painter: TrianglePainter(
+              strokeColor: Colors.blue,
+              strokeWidth: 2,
+              paintingStyle: PaintingStyle.fill,
+            ),
+          ),
+        ),
+      ];
+    } else if (pointsState is PointsLoadSuccess) {
       List<SkatePoint> points = pointsState.skatePoints.toList();
       return points.map(
         (point) {
-          var diameter = zoomContext.read<ZoomCubit>().state;
+          final diameter = zoomContext.read<ZoomCubit>().state;
           return Marker(
             point:
                 LatLng(point.coordinates.latitude, point.coordinates.longitude),
